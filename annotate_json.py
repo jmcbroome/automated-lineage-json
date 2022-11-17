@@ -7,10 +7,10 @@ def argparser():
     parser = argparse.ArgumentParser(description="Simple implementation of the genotype representation metric for automated lineage designation for arbitrary Nextstrain JSON.")
     parser.add_argument("-i","--input",help="Name of an input JSON.",required=True)
     parser.add_argument("-o","--output",help="Name of an output annotated JSON.",required=True)
-    parser.add_argument("-f","--floor",type=int,default=1,help="Set a minimum total value to annotate a lineage.")
-    parser.add_argument("-s","--size",type=int,default=3,help="Set a minimum number of samples to annotate a lineage.")
-    parser.add_argument("-d","--distinction",type=int,default=1,help="Set a minimum number of mutations separating a new lineage label with its parent.")
-    parser.add_argument("-c","--cutoff",type=float,default=.95,help="Proportion of samples that must be labeled on each level.")
+    parser.add_argument("-f","--floor",type=int,default=0,help="Set a minimum total value to annotate a lineage.")
+    parser.add_argument("-s","--size",type=int,default=0,help="Set a minimum number of samples to annotate a lineage.")
+    parser.add_argument("-d","--distinction",type=int,default=0,help="Set a minimum number of mutations separating a new lineage label with its parent.")
+    parser.add_argument("-c","--cutoff",type=float,default=1,help="Proportion of samples that must be labeled on each level.")
     return parser.parse_args() 
 
 def dists_to_root(node):
@@ -95,12 +95,17 @@ def evaluate_lineage(t, dist_to_root, anid, candidates, sum_and_count, minimum_s
         return (0,None)
     return max(good_candidates, key=lambda x: x[0])
 
-def update_json(ijd, labels):
-    ijd['meta']['colorings'].append({"key":"autolin","title":"autolin","type":"categorical"})
+def update_json(ijd, labels, levels=1):
+    for l in range(1,levels):
+        ijd['meta']['colorings'].append({"key":"autolin_level_"+str(l),"title":"autolin_level_"+str(l),"type":"categorical"})
     treed = ijd['tree']
     def traverse(cnd):
         if "name" in cnd.keys():
-            cnd['node_attrs']['autolin'] = {'value':labels.get(cnd['name'],'None')}
+            flabel = labels.get(cnd['name'],'None')
+            for l in range(1,levels):
+                if flabel != 'None':
+                    stripped = ".".join(flabel.split(".")[:l+1])
+                    cnd['node_attrs']['autolin_level_'+str(l)] = {'value':stripped}
         for nd in cnd.get("children",[]):
             traverse(nd)
     traverse(treed)
@@ -253,7 +258,7 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
             level += 1
 
     print(f"Total samples labeled: {len(all_labels)}\nTotal labels generated: {len(annotes)}")
-    njd = update_json(ijd, all_labels)
+    njd = update_json(ijd, all_labels, level)
     with open(ojson,'w+') as of:
         json.dump(njd,of)
     
