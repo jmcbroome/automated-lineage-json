@@ -85,6 +85,8 @@ def evaluate_lineage(t, dist_to_root, anid, candidates, sum_and_count, minimum_s
     for c in candidates:
         if not c.is_leaf() and c.id not in banned:
             cscore = evaluate_candidate(anid, c.id, sum_and_count, dist_to_root, minimum_size, minimum_distinction)
+            # if cscore > 50:
+                # print(c.id, cscore)
             if cscore > 0:
                 good_candidates.append((cscore,c))
     if len(good_candidates) == 0:
@@ -143,7 +145,7 @@ class Tree:
             for m in muinfo['nuc']:
                 cnode.add_mutation(m)
         for child in jd.get("children",[]):
-            if 'name' in child.keys():
+            if 'name' in child.keys() and 'children' not in child.keys():
                 new_nid = child['name']
             else:
                 new_nid = 'node_' + str(id_counter)
@@ -207,7 +209,7 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
         ijd = json.load(inf)
     t = Tree().load_from_dict(ijd['tree'])
     print("Loaded tree successfully.",file=sys.stderr)
-    annotes = {'L':'node_0'}
+    annotes = {'L':t.root.id}
     outer_annotes = annotes
     level = 1
     all_labels = {}
@@ -225,16 +227,17 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
             dist_root = dists_to_root(t.get_node(nid)) #needs the node object, not just the name
             while True:
                 scdict, leaf_count = get_sum_and_count(rbfs, ignore = labeled)
-                # print(scdict)
+                #print(scdict, leaf_count)
                 best_score, best_node = evaluate_lineage(t, dist_root, nid, rbfs, scdict, size, distinction, used_nodes)
                 if best_score <= floor:
                     break
                 newname = ann + "." + str(serial)
                 for anc in t.rsearch(best_node):
                     used_nodes.add(anc)
+                # print(used_nodes)
                 new_annotes[newname] = best_node.id
                 leaves = t.get_leaves_ids(best_node)
-                print("Leaf fetching complete.")
+                print(f"Leaf fetching complete- {len(leaves)} leaves.")
                 for l in leaves:
                     labeled.add(l)
                     #overrwite an existing higher-level label if it exists
@@ -252,7 +255,9 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
             outer_annotes = new_annotes
             level += 1
 
-    print("Total samples labeled: ", len(all_labels))
+    print(f"Total samples labeled: {len(all_labels)}\nTotal labels generated: {len(annotes)}")
+    print(all_labels)
+    print(annotes)
     njd = update_json(ijd, all_labels)
     with open(ojson,'w+') as of:
         json.dump(njd,of)
