@@ -7,10 +7,10 @@ def argparser():
     parser = argparse.ArgumentParser(description="Simple implementation of the genotype representation metric for automated lineage designation for arbitrary Nextstrain JSON.")
     parser.add_argument("-i","--input",help="Name of an input JSON.",required=True)
     parser.add_argument("-o","--output",help="Name of an output annotated JSON.",required=True)
-    parser.add_argument("-m","--missense",help="Consider only amino acid substituting mutations.")
-    parser.add_argument("-f","--floor",help="Set a minimum total value to annotate a lineage.")
-    parser.add_argument("-s","--size",help="Set a minimum number of samples to annotate a lineage.")
-    parser.add_argument("-d","--distinction",help="Set a minimum number of mutations separating a new lineage label with its parent.")
+    parser.add_argument("-f","--floor",type=int,default=1,help="Set a minimum total value to annotate a lineage.")
+    parser.add_argument("-s","--size",type=int,default=3,help="Set a minimum number of samples to annotate a lineage.")
+    parser.add_argument("-d","--distinction",type=int,default=1,help="Set a minimum number of mutations separating a new lineage label with its parent.")
+    parser.add_argument("-c","--cutoff",type=float,default=.95,help="Proportion of samples that must be labeled on each level.")
     return parser.parse_args() 
 
 def dists_to_root(node):
@@ -96,16 +96,17 @@ def update_json(ijd, labels):
     def traverse(cnd):
         if "name" in cnd.keys():
             cnd['node_attrs']['autolin'] = {'value':labels.get(cnd['name'],'None')}
-        for nd in treed['children']:
+        for nd in cnd.get("children",[]):
             traverse(nd)
     traverse(treed)
     return treed
 
 class TreeNode:
-    def __init__(self, nid, mutations=[]):
+    def __init__(self, nid, parent=None, mutations=[]):
         self.id = nid
         self.mutations = mutations
         self.children = []
+        self.parent = parent
 
     def add_child(self, obj):
         self.children.append(obj)
@@ -117,7 +118,7 @@ class TreeNode:
         return (len(self.children) == 0)
 
     def __str__(self, level=0):
-        ret = "\t"*level+repr(self.nid)+"\n"
+        ret = "\t"*level+repr(self.id)+"\n"
         for child in self.children:
             ret += child.__str__(level+1)
         return ret
@@ -134,15 +135,18 @@ class Tree:
         self.nodes = {'node_0':self.root}
         
     def __loader(self, jd, cnode):
-        for m in jd['branch_attrs']['mutations']['nuc']:
-            cnode.add_mutation(m)
-        for child in jd['tree']['children']:
+        muinfo = jd['branch_attrs']['mutations']
+        global id_counter
+        if 'nuc' in muinfo.keys():
+            for m in muinfo['nuc']:
+                cnode.add_mutation(m)
+        for child in jd.get("children",[]):
             if 'name' in child.keys():
                 new_nid = child['name']
             else:
                 new_nid = 'node_' + str(id_counter)
             id_counter += 1
-            child_node = self.__loader(child, TreeNode(new_nid))
+            child_node = self.__loader(child, TreeNode(new_nid, parent=cnode))
             cnode.add_child(child_node)
             self.nodes[child_node.id] = child_node
         return cnode
@@ -152,17 +156,28 @@ class Tree:
         id_counter = nid_ccount
         cnode = self.root
         self.__loader(jd, cnode)
+        return self
 
     def get_node(self, nid):
         return self.nodes.get(nid, None)
+
+    def rsearch(self, node):
+        cp = node
+        path = [cp.id]
+        while cp.parent != None:
+            path.append(cp.parent.id)
+            cp = cp.parent
+        return path
 
     def breadth_first_expansion(self, cnode=None, reverse=False):
         if cnode == None:
             cnode = self.root
         bfs = []
         remaining = SimpleQueue()
+        remaining.put(cnode)
         while not remaining.empty():
             node = remaining.get()
+            # print(f"Traversing {node.id}")
             bfs.append(node)
             for c in node.children:
                 remaining.put(c)
@@ -186,8 +201,10 @@ class Tree:
         return self.root.__str__()
 
 def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
-    ijd = json.load(ijson)
+    with open(ijson) as inf:
+        ijd = json.load(inf)
     t = Tree().load_from_dict(ijd['tree'])
+    print("Loaded tree successfully.",file=sys.stderr)
     annotes = {'L':'node_0'}
     outer_annotes = annotes
     level = 1
@@ -197,7 +214,8 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
         used_nodes = set()
         for ann,nid in outer_annotes.items():
             serial = 0
-            rbfs = t.breadth_first_expansion(nid, True)
+            rbfs = t.breadth_first_expansion(t.get_node(nid), True)
+            print(f"Breadth first expansion complete, size {len(rbfs)}.",file=sys.stderr)
             parent_leaf_count = len([n for n in rbfs if n.is_leaf()])
             if parent_leaf_count == 0:
                 continue
@@ -205,14 +223,16 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
             dist_root = dists_to_root(t.get_node(nid)) #needs the node object, not just the name
             while True:
                 scdict, leaf_count = get_sum_and_count(rbfs, ignore = labeled)
+                # print(scdict)
                 best_score, best_node = evaluate_lineage(t, dist_root, nid, rbfs, scdict, size, distinction, used_nodes)
                 if best_score <= floor:
                     break
                 newname = ann + "." + str(serial)
-                for anc in t.rsearch(best_node.id,True):
-                    used_nodes.add(anc.id)
+                for anc in t.rsearch(best_node):
+                    used_nodes.add(anc)
                 new_annotes[newname] = best_node.id
-                leaves = t.get_leaves_ids(best_node.id)
+                leaves = t.get_leaves_ids(best_node)
+                print("Leaf fetching complete.")
                 for l in leaves:
                     labeled.add(l)
                     #overrwite an existing higher-level label if it exists
@@ -222,6 +242,7 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
                 if len(labeled) >= leaf_count * cutoff:
                     break
                 serial += 1
+                print(f"Annotation {newname} generated for node {best_node.id}.")
         if len(new_annotes) == 0:
             break
         else:
@@ -229,13 +250,14 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
             outer_annotes = new_annotes
             level += 1
 
+    print("Total samples labeled: ", len(all_labels))
     njd = update_json(ijd, all_labels)
     with open(ojson,'w+') as of:
         json.dump(njd,of)
     
 def main():
     args = argparser()
-    pipeline(args.input,args.output,args.missense,args.floor,args.size,args.distinction)
+    pipeline(args.input,args.output,args.floor,args.size,args.distinction,args.cutoff)
 
 if __name__ == "__main__":
     main()
