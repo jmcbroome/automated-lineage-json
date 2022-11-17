@@ -92,6 +92,7 @@ def evaluate_lineage(t, dist_to_root, anid, candidates, sum_and_count, minimum_s
     return max(good_candidates, key=lambda x: x[0])
 
 def update_json(ijd, labels):
+    ijd['meta']['colorings'].append({"key":"autolin","title":"autolin","type":"categorical"})
     treed = ijd['tree']
     def traverse(cnd):
         if "name" in cnd.keys():
@@ -99,7 +100,8 @@ def update_json(ijd, labels):
         for nd in cnd.get("children",[]):
             traverse(nd)
     traverse(treed)
-    return treed
+    ijd['treed'] = treed
+    return ijd
 
 class TreeNode:
     def __init__(self, nid, parent=None, mutations=[]):
