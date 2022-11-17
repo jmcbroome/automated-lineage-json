@@ -89,6 +89,8 @@ def evaluate_lineage(t, dist_to_root, anid, candidates, sum_and_count, minimum_s
                 # print(c.id, cscore)
             if cscore > 0:
                 good_candidates.append((cscore,c))
+    if len(good_candidates) > 0:
+        print("CANDIDATEINFO", len(good_candidates))
     if len(good_candidates) == 0:
         return (0,None)
     return max(good_candidates, key=lambda x: x[0])
@@ -195,10 +197,6 @@ class Tree:
         for n in allnodes:
             if n.is_leaf():
                 leaf_ids.append(n.id)
-            else:
-                #in reverse breadth-first, all leaves should appear first. 
-                #therefore, when leaves run out, we are done.
-                break
         return leaf_ids
 
     def __str__(self):
@@ -227,7 +225,6 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
             dist_root = dists_to_root(t.get_node(nid)) #needs the node object, not just the name
             while True:
                 scdict, leaf_count = get_sum_and_count(rbfs, ignore = labeled)
-                #print(scdict, leaf_count)
                 best_score, best_node = evaluate_lineage(t, dist_root, nid, rbfs, scdict, size, distinction, used_nodes)
                 if best_score <= floor:
                     break
@@ -237,13 +234,13 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
                 # print(used_nodes)
                 new_annotes[newname] = best_node.id
                 leaves = t.get_leaves_ids(best_node)
-                print(f"Leaf fetching complete- {len(leaves)} leaves.")
+                # print(f"Leaf fetching complete- {len(leaves)} leaves.")
                 for l in leaves:
                     labeled.add(l)
                     #overrwite an existing higher-level label if it exists
                     #beacuse each lineage label name contains its ancestral lineage labels as well.
                     all_labels[l] = newname
-
+                # print("LABELINFO", len(labeled), leaf_count, cutoff)
                 if len(labeled) >= leaf_count * cutoff:
                     break
                 serial += 1
@@ -256,8 +253,6 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
             level += 1
 
     print(f"Total samples labeled: {len(all_labels)}\nTotal labels generated: {len(annotes)}")
-    print(all_labels)
-    print(annotes)
     njd = update_json(ijd, all_labels)
     with open(ojson,'w+') as of:
         json.dump(njd,of)
