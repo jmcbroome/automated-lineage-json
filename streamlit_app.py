@@ -5,13 +5,15 @@ import json
 from annotate_json import *
 
 from streamlit.runtime.scriptrunner.script_run_context import get_script_run_ctx
+import streamlit.components.v1 as components
 
 def _get_session():
     ctx = get_script_run_ctx()
     if ctx is None:
         raise Exception("Failed to get the thread context")            
     return ctx.session_id
-
+    
+st.set_page_config(layout='wide')
 with st.form(key="autolin"):
     st.markdown("# AUTOLIN")
     st.markdown("This app is a tool that uses the genotype representation score heuristic to add lineage nomenclature labels to a Nextstrain Auspice JSON.")
@@ -25,6 +27,7 @@ with st.form(key="autolin"):
     gene = st.text_input("Limit considered mutations to amino-acid altering mutations in a specific gene. Leave blank to consider mutations in any gene.",value="")
     uploaded_file = st.file_uploader("Choose a JSON to generate lineage labels from.")
     runbutton = st.form_submit_button(label='Generate the labeled JSON.')
+    components.iframe("https://auspice.us/", height=1000, scrolling=True)
 
 pref = _get_session()
 if runbutton:
