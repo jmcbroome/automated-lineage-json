@@ -18,6 +18,7 @@ def argparser():
     parser.add_argument("-c","--cutoff",type=float,default=1,help="Proportion of samples that must be labeled on each level.")
     parser.add_argument("-m","--missense",action='store_true',default=False,help="Use to only consider amino-acid altering mutations.")
     parser.add_argument("-g","--gene",default=None,help="Only consider missense mutations within a specific gene. Sets -m")
+    parser.add_argument("-l","--levels",default=0,type=int,help="Set a maximum number of levels to annotate. Default does as many as possible.")
     return parser.parse_args()
 
 def dists_to_root(node):
@@ -222,9 +223,7 @@ class Tree:
     def __str__(self):
         return self.root.__str__()
 
-def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=False, gene=None):
-    with open(ijson) as inf:
-        ijd = json.load(inf)
+def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=False, gene=None, maxlevels=0):
     t = Tree().load_from_dict(ijd['tree'], 1, missense, gene)
     print(f"Loaded tree successfully; parsimony score {t.parsimony_score()}.",file=sys.stderr)
     annotes = {'L':t.root.id}
@@ -237,7 +236,6 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=Fa
         for ann,nid in outer_annotes.items():
             serial = 0
             rbfs = t.breadth_first_expansion(t.get_node(nid), True)
-            # print(f"Breadth first expansion complete, size {len(rbfs)}.",file=sys.stderr)
             parent_leaf_count = len([n for n in rbfs if n.is_leaf()])
             if parent_leaf_count == 0:
                 continue
@@ -251,16 +249,13 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=Fa
                 newname = ann + "." + str(serial)
                 for anc in t.rsearch(best_node):
                     used_nodes.add(anc)
-                # print(used_nodes)
                 new_annotes[newname] = best_node.id
                 leaves = t.get_leaves_ids(best_node)
-                # print(f"Leaf fetching complete- {len(leaves)} leaves.")
                 for l in leaves:
                     labeled.add(l)
                     #overrwite an existing higher-level label if it exists
-                    #beacuse each lineage label name contains its ancestral lineage labels as well.
+                    #because each lineage label name contains its ancestral lineage labels as well.
                     all_labels[l] = newname
-                # print("LABELINFO", len(labeled), leaf_count, cutoff)
                 if len(labeled) >= leaf_count * cutoff:
                     break
                 serial += 1
@@ -271,15 +266,19 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=Fa
             annotes.update(new_annotes)
             outer_annotes = new_annotes
             level += 1
-
+            if maxlevels > 0:
+                if level > maxlevels:
+                    break
     print(f"Total samples labeled: {len(all_labels)}\nTotal labels generated: {len(annotes)}")
     njd = update_json(ijd, all_labels, level)
     with open(ojson,'w+') as of:
         json.dump(njd,of)
     
 def main():
-    args = argparser()
-    pipeline(args.input,args.output,args.floor,args.size,args.distinction,args.cutoff,args.missense,args.gene)
+    args = argparser()    
+    with open(args.input) as inf:
+        ijd = json.load(inf)
+    pipeline(ijd,args.output,args.floor,args.size,args.distinction,args.cutoff,args.missense,args.gene,args.levels)
 
 if __name__ == "__main__":
     main()
