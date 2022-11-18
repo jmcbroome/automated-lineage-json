@@ -226,6 +226,8 @@ def n2a(n,b=string.ascii_uppercase):
 
 def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=False, gene=None, maxlevels=0):
     t = Tree().load_from_dict(ijd['tree'], 1, missense, gene)
+    if t.parsimony_score() == 0:
+        raise Exception("Input tree contains no mutations! Did you select a gene that's not present, upload a misformatted JSON without mutation annotations, or upload an empty file?")
     print(f"Loaded tree successfully; parsimony score {t.parsimony_score()}.",file=sys.stderr)
     annotes = {'Root':t.root.id}
     outer_annotes = annotes

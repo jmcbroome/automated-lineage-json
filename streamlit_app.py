@@ -22,7 +22,7 @@ with st.form(key="autolin"):
     levels = st.number_input("Maximum number of levels to generate. Set to 0 to generate as many as possible.",min_value=0)
     floor = st.number_input("Minimum genotype representation score to annotate a lineage.",min_value=0)
     missense = st.checkbox("Consider amino-acid altering mutations across the genome only.")
-    gene = st.text_input("Limit considered mutations to amino-acid altering mutations in a specific gene. Set to 'All' to consider mutations in any gene.",value="")
+    gene = st.text_input("Limit considered mutations to amino-acid altering mutations in a specific gene. Leave blank to consider mutations in any gene.",value="")
     uploaded_file = st.file_uploader("Choose a JSON to generate lineage labels from.")
     runbutton = st.form_submit_button(label='Generate the labeled JSON.')
 
@@ -32,7 +32,7 @@ if runbutton:
         st.write("ERROR: Upload a file first!")
     else:
         ijd = json.load(uploaded_file)
-        if gene == 'All' or gene == "":
+        if gene == "":
             genearg = None
         else:
             genearg = gene
