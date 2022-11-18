@@ -106,7 +106,7 @@ def evaluate_lineage(t, dist_to_root, anid, candidates, sum_and_count, minimum_s
 
 def update_json(ijd, labels, levels=1):
     for l in range(0,levels):
-        ijd['meta']['colorings'].append({"key":"autolin_level_"+str(l),"title":"autolin_level_"+str(l),"type":"categorical"})
+        ijd['meta']['colorings'].append({"key":"GRS Lineage Level "+str(l),"title":"GRS Lineage Level "+str(l),"type":"categorical"})
     treed = ijd['tree']
     def traverse(cnd):
         flabel = 'reference'
@@ -114,7 +114,7 @@ def update_json(ijd, labels, levels=1):
             flabel = labels.get(cnd['name'],'reference')
         for l in range(0,levels):
             stripped = ".".join(flabel.split(".")[:l+1])
-            cnd['node_attrs']['autolin_level_'+str(l)] = {'value':stripped}
+            cnd['node_attrs']['GRS Lineage Level '+str(l)] = {'value':stripped}
         for nd in cnd.get("children",[]):
             traverse(nd)
     traverse(treed)
