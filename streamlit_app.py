@@ -18,7 +18,7 @@ with st.form(key="matgui"):
     st.markdown("The Nextstrain JSON files produced by this tool can be uploaded to [Auspice](https://auspice.us/) for viewing.")
     size = st.number_input("Minimum number of samples to define a lineage.",min_value=1)
     distinction = st.number_input("Minimum number of distinguishing mutations to define a lineage.",min_value=1)
-    cutoff = st.number_input("Proportion of samples that should be covered at each level of lineage annotation.",min_value=0,max_value=1,value=.95)
+    cutoff = st.number_input("Proportion of samples that should be covered at each level of lineage annotation.",min_value=0.0,max_value=1.0,value=0.95)
     levels = st.number_input("Maximum number of levels to generate. Set to 0 to generate as many as possible.",min_value=0)
     floor = st.number_input("Minimum genotype representation score to annotate a lineage.",min_value=0)
     missense = st.checkbox("Consider amino-acid altering mutations across the genome only.")

@@ -1,5 +1,5 @@
 '''
-This is adapted from https://github.com/jmcbroome/automate-lineages-prototype for application to 
+This script is adapted from https://github.com/jmcbroome/automate-lineages-prototype for application to 
 Auspice formatted JSON with reduced features and minimal additional dependencies.
 '''
 
@@ -85,7 +85,6 @@ def evaluate_candidate(a, nid, sum_and_counts, dist_to_root, minimum_size=0,mini
         candidate_value = 0
     else:
         # print("DEBUG: {} {} {} {}".format(node_count, max([(node_count-minimum_size+1),0]), candidate_to_parent, max([candidate_to_parent-minimum_distinction+1,0])))
-        # candidate_value = max([(node_count-minimum_size+1),0]) * (max([candidate_to_parent-minimum_distinction+1,0])) / (mean_distances + candidate_to_parent)
         candidate_value = node_count * candidate_to_parent / (mean_distances + candidate_to_parent)
     return candidate_value
 
@@ -94,12 +93,8 @@ def evaluate_lineage(t, dist_to_root, anid, candidates, sum_and_count, minimum_s
     for c in candidates:
         if c.id not in banned:
             cscore = evaluate_candidate(anid, c.id, sum_and_count, dist_to_root, minimum_size, minimum_distinction)
-            # if cscore > 50:
-                # print(c.id, cscore)
             if cscore > 0:
                 good_candidates.append((cscore,c))
-    # if len(good_candidates) > 0:
-        # print("CANDIDATEINFO", len(good_candidates))
     if len(good_candidates) == 0:
         return (0,None)
     return max(good_candidates, key=lambda x: x[0])
