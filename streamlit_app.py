@@ -16,7 +16,7 @@ with st.form(key="matgui"):
     st.markdown("This app is a tool to apply the genotype representation heuristic to add lineage labels to a Nextstrain Auspice JSON.")
     st.markdown("The Nextstrain JSON files produced by this tool can be uploaded to [Auspice](https://auspice.us/) for viewing.")
     missense = st.checkbox("Amino-acid altering mutations only")
-    gene = st.text_input("Limit considered mutations to a specific gene. Amino-acid altering mutations only.",value="None")
+    gene = st.text_input("Limit considered mutations to a specific gene. Amino-acid altering mutations only.",value="All")
     size = st.number_input("Minimum number of samples to define a lineage.",min_value=0)
     distinction = st.number_input("Minimum number of mutations to define a lineage.",min_value=0)
     cutoff = st.number_input("Proportion of samples that should be covered at each level of lineage annotation.",min_value=0,max_value=1,value=1)
@@ -31,9 +31,13 @@ if runbutton:
         st.write("Upload a file first!")
     else:
         ijd = json.load(uploaded_file)
-        pipeline(ijd,pref+"_subt.json",floor,size,distinction,cutoff,missense,gene,levels)
+        if gene == 'All':
+            genearg = None
+        else:
+            genearg = gene
+        pipeline(ijd,pref+"_subt.json",floor,size,distinction,cutoff,missense,genearg,levels)
         with open(pref+'_subt.json', 'r') as f:
-            db = st.download_button(label="Download Results", file_name="matgui.json", data=f.read())
+            db = st.download_button(label="Download Results", file_name="annotated.json", data=f.read())
             if db:
                 for seshfile in [pref+"_sel.txt", pref+"_subt.json"]:
                     if os.path.exists(seshfile):
