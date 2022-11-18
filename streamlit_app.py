@@ -12,7 +12,7 @@ def _get_session():
         raise Exception("Failed to get the thread context")            
     return ctx.session_id
 
-with st.form(key="matgui"):
+with st.form(key="autolin"):
     st.markdown("# AUTOLIN")
     st.markdown("This app is a tool that uses the genotype representation score heuristic to add lineage nomenclature labels to a Nextstrain Auspice JSON.")
     st.markdown("The Nextstrain JSON files produced by this tool can be uploaded to [Auspice](https://auspice.us/) for viewing.")
@@ -22,17 +22,17 @@ with st.form(key="matgui"):
     levels = st.number_input("Maximum number of levels to generate. Set to 0 to generate as many as possible.",min_value=0)
     floor = st.number_input("Minimum genotype representation score to annotate a lineage.",min_value=0)
     missense = st.checkbox("Consider amino-acid altering mutations across the genome only.")
-    gene = st.text_input("Limit considered mutations to amino-acid altering mutations in a specific gene. Set to 'All' to consider mutations in any gene.",value="All")
+    gene = st.text_input("Limit considered mutations to amino-acid altering mutations in a specific gene. Set to 'All' to consider mutations in any gene.",value="")
     uploaded_file = st.file_uploader("Choose a JSON to generate lineage labels from.")
     runbutton = st.form_submit_button(label='Generate the labeled JSON.')
 
 pref = _get_session()
 if runbutton:
     if uploaded_file == None:
-        st.write("Upload a file first!")
+        st.write("ERROR: Upload a file first!")
     else:
         ijd = json.load(uploaded_file)
-        if gene == 'All':
+        if gene == 'All' or gene == "":
             genearg = None
         else:
             genearg = gene
