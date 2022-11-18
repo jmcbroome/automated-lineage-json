@@ -40,7 +40,7 @@ if runbutton:
         with open(pref+'_subt.json', 'r') as f:
             db = st.download_button(label="Download Results", file_name="annotated.json", data=f.read())
             if db:
-                for seshfile in [pref+"_sel.txt", pref+"_subt.json"]:
-                    if os.path.exists(seshfile):
-                        print("Clearing temporary file: " + seshfile,file=sys.stderr)
-                        os.remove(seshfile)
+                seshfile = pref+"_subt.json"
+                if os.path.exists(seshfile):
+                    print("Clearing temporary file: " + seshfile,file=sys.stderr)
+                    os.remove(seshfile)
