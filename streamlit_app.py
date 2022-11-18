@@ -4,7 +4,7 @@ import sys
 import json
 from annotate_json import *
 
-from streamlit.scriptrunner.script_run_context import get_script_run_ctx
+from streamlit.runtime.scriptrunner.script_run_context import get_script_run_ctx
 
 def _get_session():
     ctx = get_script_run_ctx()
