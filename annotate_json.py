@@ -110,7 +110,7 @@ def update_json(ijd, labels, levels=1):
     treed = ijd['tree']
     def traverse(cnd):
         if "name" in cnd.keys():
-            flabel = labels.get(cnd['name'],'L')
+            flabel = labels.get(cnd['name'],'Root')
             for l in range(1,levels):
                 stripped = ".".join(flabel.split(".")[:l+1])
                 cnd['node_attrs']['autolin_level_'+str(l)] = {'value':stripped}
