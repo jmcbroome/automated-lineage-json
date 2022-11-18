@@ -26,7 +26,9 @@ with st.form(key="autolin"):
     missense = st.checkbox("Consider amino-acid altering mutations across the genome only.")
     gene = st.text_input("Limit considered mutations to amino-acid altering mutations in a specific gene. Leave blank to consider mutations in any gene.",value="")
     uploaded_file = st.file_uploader("Choose a JSON to generate lineage labels from.")
-    runbutton = st.form_submit_button(label='Generate the labeled JSON.')
+    runbutton = st.form_submit_button(label='Generate the labeled JSON for upload.')
+    st.markdown("Once downloaded, you can drag and drop the results file into the view below, or to a [separate tab.](https://auspice.us/)")
+    st.markdown("You have to download the results file first as Auspice is rendered client-side.")
     components.iframe("https://auspice.us/", height=1000, scrolling=True)
 
 pref = _get_session()
