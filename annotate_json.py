@@ -20,6 +20,7 @@ def argparser():
     parser.add_argument("-m","--missense",action='store_true',default=False,help="Use to only consider amino-acid altering mutations.")
     parser.add_argument("-g","--gene",default=None,help="Only consider missense mutations within a specific gene. Sets -m")
     parser.add_argument("-l","--levels",default=0,type=int,help="Set a maximum number of levels to annotate. Default does as many as possible.")
+    parser.add_argument("-a","--labels",help="Write sample-lineage associations to the target files.",default=None)
     return parser.parse_args()
 
 def dists_to_root(node):
@@ -224,7 +225,7 @@ def n2a(n,b=string.ascii_uppercase):
    d, m = divmod(n,len(b))
    return n2a(d-1,b)+b[m] if d else b[m]
 
-def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=False, gene=None, maxlevels=0):
+def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=False, gene=None, maxlevels=0, labels=None):
     t = Tree().load_from_dict(ijd['tree'], 1, missense, gene)
     if t.parsimony_score() == 0:
         raise Exception("Input tree contains no mutations! Did you select a gene that's not present, upload a misformatted JSON without mutation annotations, or upload an empty file?")
@@ -276,6 +277,11 @@ def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=Fals
                 if level > maxlevels:
                     break
     print(f"Total samples labeled: {len(all_labels)}\nTotal labels generated: {len(annotes)}")
+    if labels != None:
+        with open(labels,'w+') as of:
+            print("sample","lineage",sep='\t',file=of)
+            for k,v in all_labels.items():
+                print(k,v,sep='\t',file=of)
     njd = update_json(ijd, all_labels, level)
     with open(ojson,'w+') as of:
         json.dump(njd,of)
@@ -284,7 +290,7 @@ def main():
     args = argparser()    
     with open(args.input) as inf:
         ijd = json.load(inf)
-    pipeline(ijd,args.output,args.floor,args.size,args.distinction,args.cutoff,args.missense,args.gene,args.levels)
+    pipeline(ijd,args.output,args.floor,args.size,args.distinction,args.cutoff,args.missense,args.gene,args.levels,args.labels)
 
 if __name__ == "__main__":
     main()

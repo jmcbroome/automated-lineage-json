@@ -26,10 +26,9 @@ with st.form(key="autolin"):
     missense = st.checkbox("Consider amino-acid altering mutations across the genome only.")
     gene = st.text_input("Limit considered mutations to amino-acid altering mutations in a specific gene. Leave blank to consider mutations in any gene.",value="")
     uploaded_file = st.file_uploader("Choose a JSON to generate lineage labels from.")
-    runbutton = st.form_submit_button(label='Generate the labeled JSON for upload.')
+    runbutton = st.form_submit_button(label='Generate the labeled JSON and table.')
     st.markdown("Once downloaded, you can drag and drop the results file into the view below, or to a [separate tab.](https://auspice.us/)")
     st.markdown("You have to download the results file first as Auspice is rendered client-side.")
-    components.iframe("https://auspice.us/", height=1000, scrolling=True)
 
 pref = _get_session()
 if runbutton:
@@ -41,11 +40,20 @@ if runbutton:
             genearg = None
         else:
             genearg = gene
-        pipeline(ijd,pref+"_subt.json",floor,size,distinction,cutoff,missense,genearg,levels)
-        with open(pref+'_subt.json', 'r') as f:
-            db = st.download_button(label="Download Results", file_name="annotated.json", data=f.read())
-            if db:
-                seshfile = pref+"_subt.json"
-                if os.path.exists(seshfile):
-                    print("Clearing temporary file: " + seshfile,file=sys.stderr)
-                    os.remove(seshfile)
+        pipeline(ijd,pref+"_annotated.json",floor,size,distinction,cutoff,missense,genearg,levels,pref+"_labels.tsv")
+        with open(pref+'_annotated.json', 'r') as f:
+            with open(pref+"_labels.tsv", 'r') as f2:
+                db = st.download_button(label="Download Annotated JSON", file_name="annotated.json", data=f.read())
+                db2 = st.download_button(label="Download Sample Lineage Association Table", file_name="labels.tsv", data=f2.read())
+                if db:
+                    seshfile = pref+"_annotated.json"
+                    if os.path.exists(seshfile):
+                        print("Clearing temporary file: " + seshfile,file=sys.stderr)
+                        os.remove(seshfile)
+                if db2:
+                    seshfile = pref+"_labels.tsv"
+                    if os.path.exists(seshfile):
+                        print("Clearing temporary file: " + seshfile,file=sys.stderr)
+                        os.remove(seshfile)
+
+components.iframe("https://auspice.us/", height=1000, scrolling=True)
