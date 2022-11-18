@@ -16,7 +16,7 @@ def argparser():
     parser.add_argument("-s","--size",type=int,default=0,help="Set a minimum number of samples to annotate a lineage.")
     parser.add_argument("-d","--distinction",type=int,default=0,help="Set a minimum number of mutations separating a new lineage label with its parent.")
     parser.add_argument("-c","--cutoff",type=float,default=1,help="Proportion of samples that must be labeled on each level.")
-    parser.add_argument("-m","--missense",action='store_true',help="Use to only consider amino-acid altering mutations.")
+    parser.add_argument("-m","--missense",action='store_true',default=False,help="Use to only consider amino-acid altering mutations.")
     parser.add_argument("-g","--gene",default=None,help="Only consider missense mutations within a specific gene. Sets -m")
     return parser.parse_args()
 
@@ -170,7 +170,7 @@ class Tree:
             else:
                 new_nid = 'node_' + str(id_counter)
             id_counter += 1
-            child_node = self.__loader(child, TreeNode(new_nid, parent=cnode))
+            child_node = self.__loader(child, TreeNode(new_nid, parent=cnode), aa, gene)
             cnode.add_child(child_node)
             self.nodes[child_node.id] = child_node
         return cnode
@@ -184,6 +184,9 @@ class Tree:
 
     def get_node(self, nid):
         return self.nodes.get(nid, None)
+
+    def parsimony_score(self):
+        return sum([len(n.mutations) for n in self.nodes.values()])
 
     def rsearch(self, node):
         cp = node
@@ -222,8 +225,8 @@ class Tree:
 def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=False, gene=None):
     with open(ijson) as inf:
         ijd = json.load(inf)
-    t = Tree().load_from_dict(ijd['tree'], missense, gene)
-    print("Loaded tree successfully.",file=sys.stderr)
+    t = Tree().load_from_dict(ijd['tree'], 1, missense, gene)
+    print(f"Loaded tree successfully; parsimony score {t.parsimony_score()}.",file=sys.stderr)
     annotes = {'L':t.root.id}
     outer_annotes = annotes
     level = 1
