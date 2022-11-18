@@ -1,3 +1,8 @@
+'''
+This is adapted from https://github.com/jmcbroome/automate-lineages-prototype for application to 
+Auspice formatted JSON with reduced features and minimal additional dependencies.
+'''
+
 import sys
 import json
 import argparse
@@ -101,11 +106,10 @@ def update_json(ijd, labels, levels=1):
     treed = ijd['tree']
     def traverse(cnd):
         if "name" in cnd.keys():
-            flabel = labels.get(cnd['name'],'None')
+            flabel = labels.get(cnd['name'],'L')
             for l in range(1,levels):
-                if flabel != 'None':
-                    stripped = ".".join(flabel.split(".")[:l+1])
-                    cnd['node_attrs']['autolin_level_'+str(l)] = {'value':stripped}
+                stripped = ".".join(flabel.split(".")[:l+1])
+                cnd['node_attrs']['autolin_level_'+str(l)] = {'value':stripped}
         for nd in cnd.get("children",[]):
             traverse(nd)
     traverse(treed)
