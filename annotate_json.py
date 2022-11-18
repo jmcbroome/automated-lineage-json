@@ -83,14 +83,14 @@ def evaluate_candidate(a, nid, sum_and_counts, dist_to_root, minimum_size=0,mini
 def evaluate_lineage(t, dist_to_root, anid, candidates, sum_and_count, minimum_size = 0, minimum_distinction = 0, banned = set()):
     good_candidates = []
     for c in candidates:
-        if not c.is_leaf() and c.id not in banned:
+        if c.id not in banned:
             cscore = evaluate_candidate(anid, c.id, sum_and_count, dist_to_root, minimum_size, minimum_distinction)
             # if cscore > 50:
                 # print(c.id, cscore)
             if cscore > 0:
                 good_candidates.append((cscore,c))
-    if len(good_candidates) > 0:
-        print("CANDIDATEINFO", len(good_candidates))
+    # if len(good_candidates) > 0:
+        # print("CANDIDATEINFO", len(good_candidates))
     if len(good_candidates) == 0:
         return (0,None)
     return max(good_candidates, key=lambda x: x[0])
@@ -222,7 +222,7 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
         for ann,nid in outer_annotes.items():
             serial = 0
             rbfs = t.breadth_first_expansion(t.get_node(nid), True)
-            print(f"Breadth first expansion complete, size {len(rbfs)}.",file=sys.stderr)
+            # print(f"Breadth first expansion complete, size {len(rbfs)}.",file=sys.stderr)
             parent_leaf_count = len([n for n in rbfs if n.is_leaf()])
             if parent_leaf_count == 0:
                 continue
