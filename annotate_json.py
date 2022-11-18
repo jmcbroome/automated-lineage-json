@@ -16,7 +16,9 @@ def argparser():
     parser.add_argument("-s","--size",type=int,default=0,help="Set a minimum number of samples to annotate a lineage.")
     parser.add_argument("-d","--distinction",type=int,default=0,help="Set a minimum number of mutations separating a new lineage label with its parent.")
     parser.add_argument("-c","--cutoff",type=float,default=1,help="Proportion of samples that must be labeled on each level.")
-    return parser.parse_args() 
+    parser.add_argument("-m","--missense",action='store_true',help="Use to only consider amino-acid altering mutations.")
+    parser.add_argument("-g","--gene",default=None,help="Only consider missense mutations within a specific gene. Sets -m")
+    return parser.parse_args()
 
 def dists_to_root(node):
     #nodes must be a dict that gets updated on each recursion
@@ -149,12 +151,19 @@ class Tree:
         self.root = TreeNode('node_0')
         self.nodes = {'node_0':self.root}
         
-    def __loader(self, jd, cnode):
+    def __loader(self, jd, cnode, aa=False, gene=None):
         muinfo = jd['branch_attrs']['mutations']
         global id_counter
-        if 'nuc' in muinfo.keys():
-            for m in muinfo['nuc']:
-                cnode.add_mutation(m)
+        if not aa and gene == None:
+            if 'nuc' in muinfo.keys():
+                for m in muinfo['nuc']:
+                    cnode.add_mutation(m)
+        else:
+            for g, aav in muinfo.items():
+                if g != 'nuc':
+                    if gene == None or g == gene:
+                        for aa in aav:
+                            cnode.add_mutation(aa)
         for child in jd.get("children",[]):
             if 'name' in child.keys() and 'children' not in child.keys():
                 new_nid = child['name']
@@ -166,11 +175,11 @@ class Tree:
             self.nodes[child_node.id] = child_node
         return cnode
 
-    def load_from_dict(self, jd, nid_ccount = 1):
+    def load_from_dict(self, jd, nid_ccount = 1, aa = False, gene = None):
         global id_counter
         id_counter = nid_ccount
         cnode = self.root
-        self.__loader(jd, cnode)
+        self.__loader(jd, cnode, aa, gene)
         return self
 
     def get_node(self, nid):
@@ -192,7 +201,6 @@ class Tree:
         remaining.put(cnode)
         while not remaining.empty():
             node = remaining.get()
-            # print(f"Traversing {node.id}")
             bfs.append(node)
             for c in node.children:
                 remaining.put(c)
@@ -211,10 +219,10 @@ class Tree:
     def __str__(self):
         return self.root.__str__()
 
-def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
+def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=False, gene=None):
     with open(ijson) as inf:
         ijd = json.load(inf)
-    t = Tree().load_from_dict(ijd['tree'])
+    t = Tree().load_from_dict(ijd['tree'], missense, gene)
     print("Loaded tree successfully.",file=sys.stderr)
     annotes = {'L':t.root.id}
     outer_annotes = annotes
@@ -268,7 +276,7 @@ def pipeline(ijson, ojson, floor=0, size=0, distinction=0, cutoff=1):
     
 def main():
     args = argparser()
-    pipeline(args.input,args.output,args.floor,args.size,args.distinction,args.cutoff)
+    pipeline(args.input,args.output,args.floor,args.size,args.distinction,args.cutoff,args.missense,args.gene)
 
 if __name__ == "__main__":
     main()
