@@ -7,6 +7,7 @@ import sys
 import json
 import argparse
 from queue import SimpleQueue
+import string
 
 def argparser():
     parser = argparse.ArgumentParser(description="Simple implementation of the genotype representation metric for automated lineage designation for arbitrary Nextstrain JSON.")
@@ -223,10 +224,14 @@ class Tree:
     def __str__(self):
         return self.root.__str__()
 
+def n2a(n,b=string.ascii_uppercase):
+   d, m = divmod(n,len(b))
+   return n2a(d-1,b)+b[m] if d else b[m]
+
 def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=False, gene=None, maxlevels=0):
     t = Tree().load_from_dict(ijd['tree'], 1, missense, gene)
     print(f"Loaded tree successfully; parsimony score {t.parsimony_score()}.",file=sys.stderr)
-    annotes = {'L':t.root.id}
+    annotes = {'Root':t.root.id}
     outer_annotes = annotes
     level = 1
     all_labels = {}
@@ -246,7 +251,10 @@ def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=Fals
                 best_score, best_node = evaluate_lineage(t, dist_root, nid, rbfs, scdict, size, distinction, used_nodes)
                 if best_score <= floor:
                     break
-                newname = ann + "." + str(serial)
+                if ann == "Root":
+                    newname = n2a(serial)
+                else:
+                    newname = ann + "." + str(serial)
                 for anc in t.rsearch(best_node):
                     used_nodes.add(anc)
                 new_annotes[newname] = best_node.id
