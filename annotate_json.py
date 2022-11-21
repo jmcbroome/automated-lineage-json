@@ -105,9 +105,9 @@ def update_json(ijd, labels, levels=1):
         ijd['meta']['colorings'].append({"key":"GRS Lineage Level "+str(l),"title":"GRS Lineage Level "+str(l),"type":"categorical"})
     treed = ijd['tree']
     def traverse(cnd):
-        flabel = 'reference'
+        flabel = 'not assigned'
         if "name" in cnd.keys():
-            flabel = labels.get(cnd['name'],'reference')
+            flabel = labels.get(cnd['name'],'not assigned')
         for l in range(0,levels):
             stripped = ".".join(flabel.split(".")[:l+1])
             cnd['node_attrs']['GRS Lineage Level '+str(l)] = {'value':stripped}

@@ -38,7 +38,8 @@ with st.form(key="autolin"):
     runbutton = st.form_submit_button(label='Generate the labeled JSON and table.')
     st.markdown("Once downloaded, you can drag and drop the annotated JSON into the view below, or to a [separate tab.](https://auspice.us/)")
     st.markdown("You have to download the results file first as Auspice is rendered client-side.")
-    st.markdown("Any question, problems, or suggestions can be posted on the [Github repo!](https://github.com/jmcbroome/automated-lineage-json/issues)")
+    st.markdown("Once uploaded to Auspice, the different lineage label levels can be viewed using the 'Color By' dropdown menu, as the 'GRS Lineage Level X' labels.")
+    st.markdown("Any questions, problems, or suggestions can be posted on the [Github repo!](https://github.com/jmcbroome/automated-lineage-json/issues)")
 
 pref = _get_session()
 if runbutton:
