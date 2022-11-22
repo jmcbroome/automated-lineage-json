@@ -119,8 +119,11 @@ def update_json(ijd, labels, annd, levels=0):
             cnd['branch_attrs']['labels']['GRS Lineage Root'] = ",".join(annd[nid])
         if "name" in cnd.keys():
             flabel = labels.get(cnd['name'],'not assigned')
-        else:
+        if flabel == 'not assigned':
+            #try finding it under its dfs location.
             flabel = labels.get(nid,'not assigned')
+            if flabel != 'not assigned':
+                print('Node labeled via internal id')
         for l in range(0,levels):
             stripped = ".".join(flabel.split(".")[:l+1])
             cnd['node_attrs']['GRS Lineage Level '+str(l)] = {'value':stripped}
@@ -246,7 +249,8 @@ def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=Fals
     annotes = {'Root':t.root.id}
     outer_annotes = annotes
     level = 1
-    leaf_labels = {}
+    leaf_names = set(t.get_leaves_ids())
+    all_labels = {}
     while True:
         new_annotes = {}
         used_nodes = set()
@@ -274,9 +278,9 @@ def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=Fals
                 for l in desc:
                     #overrwite an existing higher-level label if it exists
                     #because each lineage label name contains its ancestral lineage labels as well.
+                    all_labels[l.id] = newname
                     if l.is_leaf():
                         labeled.add(l.id)
-                        leaf_labels[l.id] = newname
                 if len(labeled) >= leaf_count * cutoff:
                     break
                 serial += 1
@@ -290,7 +294,7 @@ def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=Fals
                 if level >= maxlevels:
                     break
             level += 1
-
+    leaf_labels = {k:v for k,v in all_labels.items() if k in leaf_names}
     print(f"Total samples labeled: {len(leaf_labels)}\nTotal labels generated: {len(annotes)}\nTotal levels generated: {level}")
     if labels != None:
         with open(labels,'w+') as of:
@@ -303,7 +307,7 @@ def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=Fals
             annd[nid] = [annote]
         else:
             annd[nid].append(annote)
-    njd = update_json(ijd, leaf_labels, annd, level)
+    njd = update_json(ijd, all_labels, annd, level)
     with open(ojson,'w+') as of:
         json.dump(njd,of)
     
