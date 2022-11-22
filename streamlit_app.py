@@ -3,6 +3,7 @@ import os
 import sys
 import json
 from annotate_json import *
+import zipfile
 
 from streamlit.runtime.scriptrunner.script_run_context import get_script_run_ctx
 import streamlit.components.v1 as components
@@ -29,7 +30,7 @@ with st.form(key="autolin"):
     st.markdown("The Nextstrain JSON files produced by this tool can be uploaded to [Auspice](https://auspice.us/) for viewing. For convenience, a view of auspice.us is embedded below.")
     size = st.number_input("Output lineages will contain at least this many samples.",min_value=1)
     distinction = st.number_input("Output lineages will have at least this many mutations distinguishing them from their parent lineage or the tree root.",min_value=1)
-    cutoff = st.number_input("Proportion of samples that should be covered at each level of lineage annotation.",min_value=0.0,max_value=1.0,value=0.95)
+    cutoff = st.number_input("Proportion of samples that should be covered at each level of lineage annotation.",min_value=0.0,max_value=1.0,value=0.90)
     levels = st.number_input("Maximum number of levels to generate. Set to 0 to generate as many as possible.",min_value=0)
     floor = st.number_input("Minimum genotype representation score to annotate a lineage. This is an abstract value that considers both the number and distinction of descendent samples. Set to a higher value to prevent the designation of marginal, small lineage labels.",min_value=0)
     missense = st.checkbox("Consider only amino-acid altering mutations across the genome.")
@@ -51,20 +52,15 @@ if runbutton:
             genearg = None
         else:
             genearg = gene
-        pipeline(ijd,pref+"_annotated.json",floor,size,distinction,cutoff,missense,genearg,levels,pref+"_labels.tsv")
-        with open(pref+'_annotated.json', 'r') as f:
-            with open(pref+"_labels.tsv", 'r') as f2:
-                db = st.download_button(label="Download Annotated JSON", file_name="annotated.json", data=f.read())
-                db2 = st.download_button(label="Download Sample Lineage Association Table", file_name="labels.tsv", data=f2.read())
-                if db:
-                    seshfile = pref+"_annotated.json"
+        pipeline(ijd,"annotated.json",floor,size,distinction,cutoff,missense,genearg,levels,"labels.tsv")
+        with zipfile.ZipFile(pref+'_results.zip','w') as zipf:
+            zipf.write("annotated.json")
+            zipf.write("labels.tsv")
+        with open(pref+"_results.zip","rb") as f:
+            db = st.download_button(label="Download Annotated JSON and Table in ZIP Format", file_name="results.zip", data=f.read())
+            if db:
+                for seshfile in ["annotated.json","labels.tsv","results.zip"]:
                     if os.path.exists(seshfile):
                         print("Clearing temporary file: " + seshfile,file=sys.stderr)
                         os.remove(seshfile)
-                if db2:
-                    seshfile = pref+"_labels.tsv"
-                    if os.path.exists(seshfile):
-                        print("Clearing temporary file: " + seshfile,file=sys.stderr)
-                        os.remove(seshfile)
-
 components.iframe("https://auspice.us/", height=1000, scrolling=True)
