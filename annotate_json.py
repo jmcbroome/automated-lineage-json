@@ -122,8 +122,6 @@ def update_json(ijd, labels, annd, levels=0):
         if flabel == 'not assigned':
             #try finding it under its dfs location.
             flabel = labels.get(nid,'not assigned')
-            if flabel != 'not assigned':
-                print('Node labeled via internal id')
         for l in range(0,levels):
             stripped = ".".join(flabel.split(".")[:l+1])
             cnd['node_attrs']['GRS Lineage Level '+str(l)] = {'value':stripped}
