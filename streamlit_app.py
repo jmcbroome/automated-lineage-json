@@ -58,8 +58,9 @@ if runbutton:
             zipf.write("labels.tsv")
         with open(pref+"_results.zip","rb") as f:
             db = st.download_button(label="Download Annotated JSON and Table in ZIP Format", file_name="results.zip", data=f.read())
-            if db:
-                for seshfile in ["annotated.json","labels.tsv","results.zip"]:
+            if db != None:
+                print("Attempting to clear temp files.")
+                for seshfile in ["annotated.json","labels.tsv",pref+"_results.zip"]:
                     if os.path.exists(seshfile):
                         print("Clearing temporary file: " + seshfile,file=sys.stderr)
                         os.remove(seshfile)
