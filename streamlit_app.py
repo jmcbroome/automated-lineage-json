@@ -32,7 +32,7 @@ with st.form(key="autolin"):
     distinction = st.number_input("Output lineages will have at least this many mutations distinguishing them from their parent lineage or the tree root.",min_value=1)
     cutoff = st.number_input("Proportion of samples that should be covered at each level of lineage annotation.",min_value=0.0,max_value=1.0,value=0.90)
     levels = st.number_input("Maximum number of levels to generate. Set to 0 to generate as many as possible.",min_value=0)
-    floor = st.number_input("Minimum genotype representation score to annotate a lineage. This is an abstract value that considers both the number and distinction of descendent samples. Set to a higher value to prevent the designation of marginal, small lineage labels.",min_value=0)
+    floor = st.number_input("Minimum genotype representation score to annotate a lineage. This value considers both the number and distinction of descendent samples- a value of 1 means a lineage that represents an average of 1 mutation for a randomly chosen sample from the tree. Set to higher values to exclude small, marginal lineages.",min_value=0)
     missense = st.checkbox("Consider only amino-acid altering mutations across the genome.")
     gene = st.text_input("Limit considered mutations to amino-acid altering mutations in a specific gene, named here. Leave blank to consider mutations in any gene. Ensure that the gene is present in your input JSON!",value="")
     uploaded_file = st.file_uploader("Upload a JSON to generate lineage labels from.")
