@@ -17,7 +17,7 @@ def _get_session():
 st.set_page_config(layout='wide')
 with st.form(key="autolin"):
     st.markdown("# AUTOLIN")
-    st.markdown("This app is a tool that uses the [genotype representation score heuristic](https://github.com/jmcbroome/automate-lineages-prototype#mathematical-underpinnings) to add lineage nomenclature labels to a Nextstrain Auspice JSON.")
+    st.markdown("This app is a tool that uses the [genotype representation index heuristic](https://github.com/jmcbroome/automate-lineages-prototype#mathematical-underpinnings) to add lineage nomenclature labels to a Nextstrain Auspice JSON.")
     st.markdown(" ".join([
         "The generated nomenclature is genotype-based and hierarchical, with a simplified Pango-style naming schema.",
         "For example, the lineage A.1.1 is a sublineage of A.1, which in turn is a sublineage of group A.",
@@ -33,7 +33,7 @@ with st.form(key="autolin"):
     distinction = st.number_input("Output lineages will have at least this many mutations distinguishing them from their parent lineage or the tree root.",min_value=1)
     cutoff = st.number_input("Proportion of samples that should be covered at each level of lineage annotation.",min_value=0.0,max_value=1.0,value=0.90)
     levels = st.number_input("Maximum number of levels to generate. Set to 0 to generate as many as possible.",min_value=0)
-    floor = st.number_input("Minimum genotype representation score to annotate a lineage. This value considers both the number and distinction of descendent samples- a value of 1 means a lineage that represents an average of 1 mutation for a randomly chosen sample from the tree. Set to higher values to exclude small, marginal lineages.",min_value=0)
+    floor = st.number_input("Minimum genotype representation index to annotate a lineage. This value considers both the number and distinction of descendent samples- a value of 1 means a lineage that represents an average of 1 mutation for a randomly chosen sample from the tree. Set to higher values to exclude small, marginal lineages.",min_value=0)
     missense = st.checkbox("Consider only amino-acid altering mutations across the genome.")
     gene = st.text_input("Limit considered mutations to amino-acid altering mutations in a specific gene, named here. Leave blank to consider mutations in any gene. Ensure that the gene is present in your input JSON!",value="")
     uploaded_file = st.file_uploader("Upload a JSON to generate lineage labels from.")
