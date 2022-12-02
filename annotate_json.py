@@ -102,7 +102,7 @@ def evaluate_lineage(t, dist_to_root, anid, candidates, sum_and_count, minimum_s
 
 def update_json(ijd, labels, annd, levels=0):
     for l in range(0,levels):
-        ijd['meta']['colorings'].append({"key":"GRS Lineage Level "+str(l),"title":"GRS Lineage Level "+str(l),"type":"categorical"})
+        ijd['meta']['colorings'].append({"key":"GRI Lineage Level "+str(l),"title":"GRI Lineage Level "+str(l),"type":"categorical"})
     treed = ijd['tree']
     global id_counter 
     id_counter = 0
@@ -116,7 +116,7 @@ def update_json(ijd, labels, annd, levels=0):
         if nid in annd:
             if 'labels' not in cnd['branch_attrs']:
                 cnd['branch_attrs']['labels'] = {}
-            cnd['branch_attrs']['labels']['GRS Lineage Root'] = ",".join(annd[nid])
+            cnd['branch_attrs']['labels']['GRI Lineage Root'] = ",".join(annd[nid])
         if "name" in cnd.keys():
             flabel = labels.get(cnd['name'],'not assigned')
         if flabel == 'not assigned':
@@ -124,7 +124,7 @@ def update_json(ijd, labels, annd, levels=0):
             flabel = labels.get(nid,'not assigned')
         for l in range(0,levels):
             stripped = ".".join(flabel.split(".")[:l+1])
-            cnd['node_attrs']['GRS Lineage Level '+str(l)] = {'value':stripped}
+            cnd['node_attrs']['GRI Lineage Level '+str(l)] = {'value':stripped}
         for nd in cnd.get("children",[]):
             traverse(nd)
     traverse(treed)
