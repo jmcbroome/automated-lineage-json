@@ -114,9 +114,10 @@ def update_json(ijd, labels, annd, levels=0):
         # flabel = 'not assigned'
         #if its a lineage root, add that information as a branch_attrs label.
         if nid in annd:
-            if 'labels' not in cnd['branch_attrs']:
-                cnd['branch_attrs']['labels'] = {}
-            cnd['branch_attrs']['labels']['GRI Lineage Root'] = ",".join(annd[nid])
+            if 'branch_attrs' in cnd:
+                if 'labels' not in cnd['branch_attrs']:
+                    cnd['branch_attrs']['labels'] = {}
+                cnd['branch_attrs']['labels']['GRI Lineage Root'] = ",".join(annd[nid])
         if "name" in cnd.keys():
             flabel = labels.get(cnd['name'],'not assigned')
         if flabel == 'not assigned':
@@ -124,7 +125,8 @@ def update_json(ijd, labels, annd, levels=0):
             flabel = labels.get(nid,'not assigned')
         for l in range(0,levels):
             stripped = ".".join(flabel.split(".")[:l+1])
-            cnd['node_attrs']['GRI Lineage Level '+str(l)] = {'value':stripped}
+            if 'node_attrs' in cnd:
+                cnd['node_attrs']['GRI Lineage Level '+str(l)] = {'value':stripped}
         for nd in cnd.get("children",[]):
             traverse(nd)
     traverse(treed)
@@ -165,7 +167,11 @@ class Tree:
         self.nodes = {'node_0':self.root}
         
     def __loader(self, jd, cnode, aa=False, gene=None):
-        muinfo = jd['branch_attrs']['mutations']
+        try:
+            muinfo = jd['branch_attrs']['mutations']
+        except KeyError:
+            print(f"WARNING: mutations attribute not found for node!",file=sys.stderr)
+            muinfo = {}
         global id_counter
         if not aa and gene == None:
             if 'nuc' in muinfo.keys():
@@ -184,8 +190,9 @@ class Tree:
                 new_nid = 'node_' + str(id_counter)
             id_counter += 1
             child_node = self.__loader(child, TreeNode(new_nid, parent=cnode), aa, gene)
-            cnode.add_child(child_node)
-            self.nodes[child_node.id] = child_node
+            if child_node != None:
+                cnode.add_child(child_node)
+                self.nodes[child_node.id] = child_node
         return cnode
 
     def load_from_dict(self, jd, nid_ccount = 1, aa = False, gene = None):
