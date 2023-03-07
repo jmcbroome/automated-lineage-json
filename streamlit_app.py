@@ -35,7 +35,7 @@ with st.form(key="autolin"):
     levels = st.number_input("Maximum number of levels to generate. Set to 0 to generate as many as possible.",min_value=0)
     floor = st.number_input("Minimum genotype representation index to annotate a lineage. This value considers both the number and distinction of descendent samples- a value of 1 means a lineage that represents an average of 1 mutation for a randomly chosen sample from the tree. Set to higher values to exclude small, marginal lineages.",min_value=0)
     missense = st.checkbox("Consider only amino-acid altering mutations across the genome.")
-    gene = st.text_input("Limit considered mutations to amino-acid altering mutations in a specific gene, named here. Leave blank to consider mutations in any gene. Ensure that the gene is present in your input JSON!",value="")
+    gene = st.text_input("Limit considered mutations to amino-acid altering mutations in one or more specific genes, comma delinated, named here. Leave blank to consider mutations in any gene. Ensure that the genes are present in your input JSON!",value="")
     uploaded_file = st.file_uploader("Upload a JSON to generate lineage labels from.")
     runbutton = st.form_submit_button(label='Generate the labeled JSON and table.')
     st.markdown("Once downloaded, you can drag and drop the annotated JSON into the view below, or to a [separate tab.](https://auspice.us/)")
