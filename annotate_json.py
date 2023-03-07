@@ -247,6 +247,8 @@ def n2a(n,b=string.ascii_uppercase):
    return n2a(d-1,b)+b[m] if d else b[m]
 
 def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=False, gene=None, maxlevels=0, labels=None):
+    if ',' in gene:
+        gene = gene.split(",")
     t = Tree().load_from_dict(ijd['tree'], 1, missense, gene)
     if t.parsimony_score() == 0:
         raise Exception("Input tree contains no mutations! Did you select a gene that's not present, upload a misformatted JSON without mutation annotations, or upload an empty file?")
@@ -320,7 +322,6 @@ def main():
     args = argparser()
     with open(args.input) as inf:
         ijd = json.load(inf)
-    genes = args.gene.split(",")
     pipeline(ijd,args.output,args.floor,args.size,args.distinction,args.cutoff,args.missense,genes,args.levels,args.labels)
 
 if __name__ == "__main__":
