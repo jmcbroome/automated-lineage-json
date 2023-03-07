@@ -18,7 +18,7 @@ def argparser():
     parser.add_argument("-d","--distinction",type=int,default=0,help="Set a minimum number of mutations separating a new lineage label with its parent.")
     parser.add_argument("-c","--cutoff",type=float,default=1,help="Proportion of samples that must be labeled on each level.")
     parser.add_argument("-m","--missense",action='store_true',default=False,help="Use to only consider amino-acid altering mutations.")
-    parser.add_argument("-g","--gene",default=None,help="Only consider missense mutations within a specific gene. Sets -m")
+    parser.add_argument("-g","--gene",default=None,help="Only consider missense mutations within a specific gene. Pass multiple genes with ',' delimiters (e.g. S,E). Sets -m.")
     parser.add_argument("-l","--levels",default=0,type=int,help="Set a maximum number of levels to annotate. Default does as many as possible.")
     parser.add_argument("-a","--labels",help="Write sample-lineage associations to the target files.",default=None)
     return parser.parse_args()
@@ -180,7 +180,7 @@ class Tree:
         else:
             for g, aav in muinfo.items():
                 if g != 'nuc':
-                    if gene == None or g == gene:
+                    if (gene == None) | (type(gene) == str and g == gene) | (type(gene) == list and g in gene):
                         for aa in aav:
                             cnode.add_mutation(aa)
         for child in jd.get("children",[]):
@@ -320,7 +320,8 @@ def main():
     args = argparser()
     with open(args.input) as inf:
         ijd = json.load(inf)
-    pipeline(ijd,args.output,args.floor,args.size,args.distinction,args.cutoff,args.missense,args.gene,args.levels,args.labels)
+    genes = args.gene.split(",")
+    pipeline(ijd,args.output,args.floor,args.size,args.distinction,args.cutoff,args.missense,genes,args.levels,args.labels)
 
 if __name__ == "__main__":
     main()
