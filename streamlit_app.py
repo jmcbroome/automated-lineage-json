@@ -37,7 +37,7 @@ with st.form(key="autolin"):
     missense = st.checkbox("Consider only amino-acid altering mutations across the genome.")
     gene = st.text_input("Limit considered mutations to amino-acid altering mutations in one or more specific genes, comma delinated, named here. Leave blank to consider mutations in any gene. Ensure that the genes are present in your input JSON!",value="")
     uploaded_file = st.file_uploader("Upload a JSON to generate lineage labels from.")
-    runbutton = st.form_submit_button(label='Generate the labeled JSON and table.')
+    runbutton = st.form_submit_button(label='Generate the labeled JSON and tables.')
     st.markdown("Once downloaded, you can drag and drop the annotated JSON into the view below, or to a [separate tab.](https://auspice.us/)")
     st.markdown("You have to download the results file first as Auspice is rendered client-side.")
     st.markdown("Once uploaded to Auspice, the different lineage label levels can be viewed using the 'Color By' dropdown menu, as the 'GRI Lineage Level X' labels.")
@@ -53,15 +53,16 @@ if runbutton:
             genearg = None
         else:
             genearg = gene
-        pipeline(ijd,"annotated.json",floor,size,distinction,cutoff,missense,genearg,levels,"labels.tsv")
+        pipeline(ijd,"annotated.json",floor,size,distinction,cutoff,missense,genearg,levels,"labels.tsv","report.tsv")
         with zipfile.ZipFile(pref+'_results.zip','w') as zipf:
             zipf.write("annotated.json")
             zipf.write("labels.tsv")
+            zipf.write("report.tsv")
         with open(pref+"_results.zip","rb") as f:
             db = st.download_button(label="Download Annotated JSON and Table in ZIP Format", file_name="results.zip", data=f.read())
             if db != None:
                 print("Attempting to clear temp files.")
-                for seshfile in ["annotated.json","labels.tsv",pref+"_results.zip"]:
+                for seshfile in ["annotated.json","labels.tsv","report.tsv",pref+"_results.zip"]:
                     if os.path.exists(seshfile):
                         print("Clearing temporary file: " + seshfile,file=sys.stderr)
                         os.remove(seshfile)

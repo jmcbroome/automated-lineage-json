@@ -21,6 +21,7 @@ def argparser():
     parser.add_argument("-g","--gene",default=None,help="Only consider missense mutations within a specific gene. Pass multiple genes with ',' delimiters (e.g. S,E). Sets -m.")
     parser.add_argument("-l","--levels",default=0,type=int,help="Set a maximum number of levels to annotate. Default does as many as possible.")
     parser.add_argument("-a","--labels",help="Write sample-lineage associations to the target files.",default=None)
+    parser.add_argument("-r","--report",help="Write a report with statistics about generated lineages to the target file.",default=None)
     return parser.parse_args()
 
 def dists_to_root(node):
@@ -166,30 +167,34 @@ class Tree:
         self.root = TreeNode('node_0')
         self.nodes = {'node_0':self.root}
         
-    def __loader(self, jd, cnode, aa=False, gene=None):
+    def __loader(self, jd, cnode, use_aa=False, gene=None):
+        print("Loading node", cnode.id, len(cnode.mutations))
         try:
             muinfo = jd['branch_attrs']['mutations']
+            print("Muinfo", muinfo)
         except KeyError:
             print(f"WARNING: mutations attribute not found for node!",file=sys.stderr)
             muinfo = {}
         global id_counter
-        if not aa and gene == None:
+        if not use_aa and gene == None:
             if 'nuc' in muinfo.keys():
                 for m in muinfo['nuc']:
                     cnode.add_mutation(m)
         else:
             for g, aav in muinfo.items():
+                print("aav",aav)
                 if g != 'nuc':
                     if (gene == None) | (type(gene) == str and g == gene) | (type(gene) == list and g in gene):
                         for aa in aav:
-                            cnode.add_mutation(aa)
+                            cnode.add_mutation(g + ":" + aa)
+        print(f"Length of mutations after loading: {len(cnode.mutations)}")
         for child in jd.get("children",[]):
             if 'name' in child.keys() and 'children' not in child.keys():
                 new_nid = child['name']
             else:
                 new_nid = 'node_' + str(id_counter)
             id_counter += 1
-            child_node = self.__loader(child, TreeNode(new_nid, parent=cnode), aa, gene)
+            child_node = self.__loader(child, TreeNode(new_nid, parent=cnode, mutations=[]), use_aa, gene)
             if child_node != None:
                 cnode.add_child(child_node)
                 self.nodes[child_node.id] = child_node
@@ -246,7 +251,7 @@ def n2a(n,b=string.ascii_uppercase):
    d, m = divmod(n,len(b))
    return n2a(d-1,b)+b[m] if d else b[m]
 
-def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=False, gene=None, maxlevels=0, labels=None):
+def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=False, gene=None, maxlevels=0, labels=None, reportf=None):
     if ',' in gene:
         gene = gene.split(",")
     t = Tree().load_from_dict(ijd['tree'], 1, missense, gene)
@@ -317,12 +322,34 @@ def pipeline(ijd, ojson, floor=0, size=0, distinction=0, cutoff=1, missense=Fals
     njd = update_json(ijd, all_labels, annd, level)
     with open(ojson,'w+') as of:
         json.dump(njd,of)
+    if reportf != None:
+        generate_report(t, annotes, annd, reportf)
     
+def generate_report(t, annotes, annd, outf):
+    with open(outf,'w+') as of:
+        print('Lineage Annotation','Parent Lineage','Number of Descendents','Signature Mutations',sep='\t',file=of)
+        for ann, nid in annotes.items():
+            qnode = t.get_node(nid)
+            print(qnode.id, len(qnode.mutations))
+            num_desc = len(t.get_leaves_ids(qnode))
+            ancestry = t.rsearch(qnode)
+            mutations = []
+            parent = None
+            for aid in ancestry:
+                if aid in annd and aid != nid:
+                    parent = ','.join(annd[aid])
+                    break
+                else:
+                    a = t.get_node(aid)
+                    mutations.extend(a.mutations)
+            print(qnode.id, len(qnode.mutations))
+            print(ann, parent, num_desc, ','.join(mutations), sep='\t', file=of)
+
 def main():
     args = argparser()
     with open(args.input) as inf:
         ijd = json.load(inf)
-    pipeline(ijd,args.output,args.floor,args.size,args.distinction,args.cutoff,args.missense,args.genes,args.levels,args.labels)
+    pipeline(ijd,args.output,args.floor,args.size,args.distinction,args.cutoff,args.missense,args.gene,args.levels,args.labels,args.report)
 
 if __name__ == "__main__":
     main()
