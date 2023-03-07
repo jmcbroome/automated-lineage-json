@@ -322,7 +322,7 @@ def main():
     args = argparser()
     with open(args.input) as inf:
         ijd = json.load(inf)
-    pipeline(ijd,args.output,args.floor,args.size,args.distinction,args.cutoff,args.missense,genes,args.levels,args.labels)
+    pipeline(ijd,args.output,args.floor,args.size,args.distinction,args.cutoff,args.missense,args.genes,args.levels,args.labels)
 
 if __name__ == "__main__":
     main()
