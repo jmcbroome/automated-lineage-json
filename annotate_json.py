@@ -168,10 +168,8 @@ class Tree:
         self.nodes = {'node_0':self.root}
         
     def __loader(self, jd, cnode, use_aa=False, gene=None):
-        print("Loading node", cnode.id, len(cnode.mutations))
         try:
             muinfo = jd['branch_attrs']['mutations']
-            print("Muinfo", muinfo)
         except KeyError:
             print(f"WARNING: mutations attribute not found for node!",file=sys.stderr)
             muinfo = {}
@@ -182,12 +180,10 @@ class Tree:
                     cnode.add_mutation(m)
         else:
             for g, aav in muinfo.items():
-                print("aav",aav)
                 if g != 'nuc':
                     if (gene == None) | (type(gene) == str and g == gene) | (type(gene) == list and g in gene):
                         for aa in aav:
                             cnode.add_mutation(g + ":" + aa)
-        print(f"Length of mutations after loading: {len(cnode.mutations)}")
         for child in jd.get("children",[]):
             if 'name' in child.keys() and 'children' not in child.keys():
                 new_nid = child['name']
@@ -330,7 +326,6 @@ def generate_report(t, annotes, annd, outf):
         print('Lineage Annotation','Parent Lineage','Number of Descendents','Signature Mutations',sep='\t',file=of)
         for ann, nid in annotes.items():
             qnode = t.get_node(nid)
-            print(qnode.id, len(qnode.mutations))
             num_desc = len(t.get_leaves_ids(qnode))
             ancestry = t.rsearch(qnode)
             mutations = []
@@ -342,7 +337,6 @@ def generate_report(t, annotes, annd, outf):
                 else:
                     a = t.get_node(aid)
                     mutations.extend(a.mutations)
-            print(qnode.id, len(qnode.mutations))
             print(ann, parent, num_desc, ','.join(mutations), sep='\t', file=of)
 
 def main():
