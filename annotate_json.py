@@ -39,6 +39,9 @@ def dists_to_root(node):
     return nodes
 
 def get_sum_and_count(rbfs, ignore = set()):
+    """
+    Construct a dictionary storing node-wise sum and count values used for efficiently computing the GRI downstream.
+    """
     # node sum stored in first index and node count stored in second index of each dict entry
     sum_and_count_dict = {}
     leaf_count = 0
@@ -67,7 +70,7 @@ def get_sum_and_count(rbfs, ignore = set()):
     return sum_and_count_dict, leaf_count
 
 def evaluate_candidate(a, nid, sum_and_counts, dist_to_root, minimum_size=0,minimum_distinction=0):
-    """Evaluate a candidate branch as a putative sublineage.
+    """Evaluate a candidate branch as a putative sublineage by computing and returning the GRI.
 
     Args:
         t (MATree): The tree.   
