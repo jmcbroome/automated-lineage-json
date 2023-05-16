@@ -1,5 +1,5 @@
 # automated-lineage-json
-Streamlit webapp for the annotation of Nextstrain Auspice v2 JSON with 
+Streamlit webapp for the automated annotation of Nextstrain Auspice v2 JSON with lineage designations.
 
 ## Summary
 
