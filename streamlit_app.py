@@ -5,7 +5,7 @@ import json
 from annotate_json import *
 import zipfile
 
-from streamlit.runtime.scriptrunner.script_run_context import get_script_run_ctx
+from streamlit.scriptrunner.scriptrunner_utils.script_run_context import get_script_run_ctx
 import streamlit.components.v1 as components
 
 def _get_session():
